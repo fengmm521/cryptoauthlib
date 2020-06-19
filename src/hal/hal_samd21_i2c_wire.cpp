@@ -133,24 +133,25 @@ extern "C" ATCA_STATUS hal_i2c_post_init(ATCAIface iface)
 	return ATCA_SUCCESS;
 }
 
-uint8_t send_oversized(uint8_t txAddress, uint8_t *data, int size)
-{
-  if (!PERIPH_WIRE.startTransmissionWIRE(txAddress, WIRE_WRITE_FLAG)) {
-    PERIPH_WIRE.prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
-    return 2 ;  // Address error
-  }
+//发送超出最大缓存时的处理，这里不关心，因为编译不过
+// uint8_t send_oversized(uint8_t txAddress, uint8_t *data, int size)
+// {
+//   if (!PERIPH_WIRE.startTransmissionWIRE(txAddress, WIRE_WRITE_FLAG)) {
+//     PERIPH_WIRE.prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
+//     return 2 ;  // Address error
+//   }
 
-  for (int i = 0; i < size; i++) {
-    if (!PERIPH_WIRE.sendDataMasterWIRE(data[i])) {
-      PERIPH_WIRE.prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
-      return 3 ;  // Nack or error
-    }
-  }
+//   for (int i = 0; i < size; i++) {
+//     if (!PERIPH_WIRE.sendDataMasterWIRE(data[i])) {
+//       PERIPH_WIRE.prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
+//       return 3 ;  // Nack or error
+//     }
+//   }
 
-  PERIPH_WIRE.prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
+//   PERIPH_WIRE.prepareCommandBitsWire(WIRE_MASTER_ACT_STOP);
 
-  return 0;
-}
+//   return 0;
+// }
 
 extern "C" ATCA_STATUS hal_i2c_send(ATCAIface iface, uint8_t *txdata, int txlength)
 {
@@ -170,8 +171,11 @@ extern "C" ATCA_STATUS hal_i2c_send(ATCAIface iface, uint8_t *txdata, int txleng
 	Serial.println("Wire.write overflow");
     }
     res = Wire.endTransmission();
-  } else
-    res = send_oversized(cfg->atcai2c.slave_address >> 1, txdata, txlength);
+  } else{
+    //因为编译不过，所以当超出最大写缓存时，直接报发送数据错误就好。
+    // res = send_oversized(cfg->atcai2c.slave_address >> 1, txdata, txlength);
+    return ATCA_TX_FAIL;
+  }
   if (res != 0)
     return ATCA_COMM_FAIL;
 
